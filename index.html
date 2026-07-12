@@ -1,0 +1,804 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>La Aventura del Tiempo</title>
+
+  <meta name="theme-color" content="#2468b4">
+  <meta name="description" content="Juego educativo para aprender las horas y los minutos.">
+  <meta name="application-name" content="La Aventura del Tiempo">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="Aventura del Tiempo">
+  <link rel="manifest" href="./manifest.webmanifest">
+  <link rel="icon" type="image/png" sizes="192x192" href="./icons/icon-192.png">
+  <link rel="apple-touch-icon" href="./icons/icon-192.png">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;600;700;800&family=Nunito:wght@500;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    :root{
+      --ink:#17324d;
+      --blue:#2468b4;
+      --sky:#e9f7ff;
+      --gold:#ffc83d;
+      --green:#2db36b;
+      --red:#e75a6d;
+      --purple:#7c5ce3;
+    }
+    *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+    body{
+      margin:0;
+      min-height:100vh;
+      font-family:'Nunito',sans-serif;
+      color:var(--ink);
+      background:
+        radial-gradient(circle at 10% 8%, rgba(255,255,255,.95) 0 4%, transparent 5%),
+        radial-gradient(circle at 88% 12%, rgba(255,255,255,.85) 0 5%, transparent 6%),
+        linear-gradient(145deg,#dff4ff 0%,#f5fbff 48%,#fff5cf 100%);
+      overflow-x:hidden;
+    }
+    h1,h2,h3,.game-font{font-family:'Baloo 2',cursive}
+    .screen{display:none}
+    .screen.active{display:block}
+    .glass{
+      background:rgba(255,255,255,.92);
+      border:3px solid rgba(255,255,255,.95);
+      box-shadow:0 18px 50px rgba(22,55,86,.15);
+      backdrop-filter:blur(12px);
+    }
+    .btn{
+      border:none;
+      border-radius:1.2rem;
+      min-height:58px;
+      font-weight:900;
+      padding:.9rem 1.2rem;
+      box-shadow:0 7px 0 rgba(24,61,93,.18);
+      transition:.15s ease;
+      touch-action:manipulation;
+    }
+    .btn:active{transform:translateY(4px);box-shadow:0 3px 0 rgba(24,61,93,.18)}
+    .btn-primary{background:linear-gradient(135deg,#3f8be0,#1c5ba2);color:white}
+    .btn-gold{background:linear-gradient(135deg,#ffd95c,#ffb425);color:#573700}
+    .btn-green{background:linear-gradient(135deg,#45ca82,#209b5c);color:white}
+    .btn-soft{background:#edf5fa;color:#234661}
+    .input-kid{
+      width:100%;min-height:58px;border:3px solid #c8e4f4;border-radius:1.2rem;
+      padding:.9rem 1rem;font-size:1.1rem;font-weight:800;background:white;outline:none
+    }
+    .input-kid:focus{border-color:#4b91dd;box-shadow:0 0 0 5px rgba(75,145,221,.12)}
+    .pet-card{
+      border:3px solid #d6e9f5;border-radius:1.5rem;padding:1rem;background:white;
+      cursor:pointer;transition:.16s ease;min-height:150px
+    }
+    .pet-card.selected{border-color:#3b82d0;background:#eef7ff;transform:translateY(-3px);box-shadow:0 10px 20px rgba(59,130,208,.15)}
+    .world-card{
+      border-radius:1.6rem;padding:1rem;background:white;border:3px solid #dbeaf4;
+      box-shadow:0 10px 24px rgba(26,74,109,.1);position:relative
+    }
+    .world-card.locked{filter:grayscale(.8);opacity:.6}
+    .world-card.current{border-color:#ffbf33;box-shadow:0 0 0 5px rgba(255,191,51,.17),0 12px 28px rgba(26,74,109,.13)}
+    .progress-shell{height:17px;background:#dcebf4;border-radius:999px;overflow:hidden}
+    .progress-bar{height:100%;background:linear-gradient(90deg,#ffd247,#ff9f43);transition:width .3s}
+    .clock{
+      width:min(72vw,320px);aspect-ratio:1;border-radius:50%;position:relative;margin:auto;
+      background:radial-gradient(circle,#fff 0 58%,#edf8ff 59% 100%);
+      border:11px solid #2877bb;box-shadow:inset 0 0 0 5px #d9effc,0 14px 28px rgba(24,78,118,.18)
+    }
+    .clock.small{width:min(40vw,235px);border-width:9px}
+    .tick{position:absolute;width:3px;height:9px;background:#7da9c8;left:50%;top:4px;transform-origin:50% calc(50% - 4px)}
+    .tick.big{width:5px;height:14px;background:#245a83}
+    .number{
+      position:absolute;transform:translate(-50%,-50%);font-family:'Baloo 2',cursive;
+      font-size:clamp(.95rem,3.4vw,1.5rem);font-weight:900;color:#1e527d;user-select:none
+    }
+    .hand{position:absolute;left:50%;bottom:50%;transform-origin:50% 100%;border-radius:999px;z-index:5}
+    .hour-hand{width:9px;height:28%;background:#163e62;margin-left:-4.5px}
+    .minute-hand{width:6px;height:39%;background:#e84f63;margin-left:-3px}
+    .center-dot{width:20px;height:20px;border-radius:50%;background:#ffd04d;border:5px solid #163e62;position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);z-index:6}
+    .option{
+      min-height:70px;border-radius:1.25rem;border:3px solid #cfe6f4;background:white;
+      font-weight:900;font-size:1.08rem;box-shadow:0 7px 0 #c7deea;padding:.8rem 1rem
+    }
+    .option.correct{background:#ddf8e8;border-color:#32ae69;color:#145f3a}
+    .option.wrong{background:#ffe5e9;border-color:#e45d70;color:#91283a}
+    .badge{display:inline-flex;align-items:center;gap:.35rem;border-radius:999px;padding:.45rem .8rem;font-weight:900}
+    .mascot-bubble{position:relative;background:#fff;border:3px solid #cfe5f3;border-radius:1.5rem;padding:1rem 1.2rem;transition:background .25s ease,border-color .25s ease,transform .25s ease,box-shadow .25s ease}
+    .mascot-bubble:before{content:"";position:absolute;left:-13px;top:30px;width:22px;height:22px;background:white;border-left:3px solid #cfe5f3;border-bottom:3px solid #cfe5f3;transform:rotate(45deg);transition:background .25s ease,border-color .25s ease}
+    .mascot-bubble.hint-1{background:#fff8cf;border-color:#f2c94c;box-shadow:0 0 0 6px rgba(242,201,76,.16)}
+    .mascot-bubble.hint-1:before{background:#fff8cf;border-color:#f2c94c}
+    .mascot-bubble.hint-2{background:#fff0dc;border-color:#f59e42;box-shadow:0 0 0 6px rgba(245,158,66,.16)}
+    .mascot-bubble.hint-2:before{background:#fff0dc;border-color:#f59e42}
+    .mascot-bubble.hint-3{background:#eaf4ff;border-color:#4f8fd8;box-shadow:0 0 0 6px rgba(79,143,216,.16)}
+    .mascot-bubble.hint-3:before{background:#eaf4ff;border-color:#4f8fd8}
+    .hint-pulse{animation:hintPulse .5s ease}
+    @keyframes hintPulse{0%{transform:scale(.97)}55%{transform:scale(1.035)}100%{transform:scale(1)}}
+    .floaty{animation:floaty 3s ease-in-out infinite}
+    @keyframes floaty{50%{transform:translateY(-8px)}}
+    .pop{animation:pop .45s ease both}
+    @keyframes pop{0%{transform:scale(.3);opacity:0}70%{transform:scale(1.18)}100%{transform:scale(1);opacity:1}}
+    .shake{animation:shake .35s ease}
+    @keyframes shake{25%{transform:translateX(-7px)}50%{transform:translateX(7px)}75%{transform:translateX(-4px)}}
+    @media(min-width:768px){.clock{width:min(36vw,330px)}}
+  </style>
+</head>
+<body>
+  <div class="fixed inset-0 pointer-events-none overflow-hidden opacity-20">
+    <div class="absolute top-4 left-4 text-6xl floaty">⏰</div>
+    <div class="absolute top-20 right-8 text-5xl floaty" style="animation-delay:.7s">⭐</div>
+    <div class="absolute bottom-10 left-8 text-6xl floaty" style="animation-delay:1.2s">🚀</div>
+  </div>
+
+  <main class="relative z-10 max-w-6xl mx-auto p-4 md:p-7">
+    <section id="welcome" class="screen active">
+      <div class="glass rounded-[2rem] max-w-4xl mx-auto p-6 md:p-10">
+        <div class="text-center mb-7">
+          <div class="text-7xl">🕰️🌍✨</div>
+          <h1 class="text-4xl md:text-6xl font-extrabold text-blue-800">La Aventura del Tiempo</h1>
+          <p class="text-lg md:text-xl font-bold text-slate-600">Viaja por mundos increíbles mientras aprendes las horas y los minutos.</p>
+        </div>
+
+        <div id="resumeBox" class="hidden mb-6 rounded-2xl bg-emerald-50 border-2 border-emerald-200 p-5"></div>
+
+        <form id="profileForm" class="space-y-5">
+          <div class="grid md:grid-cols-2 gap-4">
+            <div>
+              <label class="block font-extrabold text-lg mb-2">¿Cómo te llamas? 👧</label>
+              <input id="nameInput" class="input-kid" maxlength="18" autocomplete="off" placeholder="Tu nombre">
+            </div>
+            <div>
+              <label class="block font-extrabold text-lg mb-2">¿Cuántos años tienes? 🎂</label>
+              <input id="ageInput" class="input-kid" type="number" min="6" max="12" inputmode="numeric" placeholder="Por ejemplo: 8">
+            </div>
+          </div>
+
+          <div>
+            <h2 class="text-2xl font-extrabold mb-3">Elige tu compañero de aventura</h2>
+            <div id="petGrid" class="grid grid-cols-2 md:grid-cols-4 gap-3"></div>
+          </div>
+
+          <p id="profileError" class="hidden bg-red-100 border-2 border-red-300 rounded-xl p-3 font-bold text-red-700"></p>
+          <button class="btn btn-primary w-full text-xl" type="submit">Empezar la aventura 🚀</button>
+        </form>
+      </div>
+    </section>
+
+    <section id="map" class="screen">
+      <header class="glass rounded-[1.6rem] p-4 mb-5 flex flex-col md:flex-row gap-3 justify-between md:items-center">
+        <div class="flex items-center gap-3">
+          <div id="mapPet" class="text-5xl"></div>
+          <div>
+            <div id="mapGreeting" class="game-font text-2xl md:text-3xl font-extrabold text-blue-800"></div>
+            <div class="font-bold text-slate-600">Elige un mundo disponible</div>
+          </div>
+        </div>
+        <div class="flex gap-2 flex-wrap">
+          <button id="albumBtn" class="btn btn-gold">📒 Álbum</button>
+          <button id="parentBtn" class="btn btn-soft">👨‍👩‍👧 Panel familiar</button>
+          <button id="resetBtn" class="btn btn-soft">🔄 Reiniciar</button>
+        </div>
+      </header>
+      <div id="worldGrid" class="grid md:grid-cols-2 gap-4"></div>
+      <div id="explorerCard" class="hidden mt-5 glass rounded-[1.6rem] p-5"></div>
+    </section>
+
+    <section id="game" class="screen">
+      <header class="glass rounded-[1.5rem] p-4 mb-4">
+        <div class="flex flex-col md:flex-row justify-between md:items-center gap-3">
+          <div class="flex items-center gap-3">
+            <div id="gamePet" class="text-5xl"></div>
+            <div>
+              <div id="worldTitle" class="game-font text-2xl md:text-3xl font-extrabold"></div>
+              <div id="worldSkill" class="font-bold text-slate-600"></div>
+            </div>
+          </div>
+          <div class="flex gap-2 flex-wrap">
+            <div class="badge bg-yellow-100 border-2 border-yellow-300">⭐ <span id="starsNow">0</span>/5</div>
+            <div class="badge bg-blue-100 border-2 border-blue-300">🎯 <span id="streakNow">0</span> seguidas</div>
+            <button id="backMapBtn" class="btn btn-soft">← Mapa</button>
+          </div>
+        </div>
+        <div class="progress-shell mt-4"><div id="starProgress" class="progress-bar" style="width:0%"></div></div>
+      </header>
+
+      <div class="glass rounded-[2rem] p-4 md:p-7">
+        <div class="grid md:grid-cols-[110px_1fr] gap-4 items-center mb-4">
+          <div id="mascotFace" class="text-7xl text-center"></div>
+          <div id="mascotBubble" class="mascot-bubble">
+            <div id="mascotText" class="font-extrabold text-lg md:text-xl"></div>
+          </div>
+        </div>
+
+        <div class="text-center mb-4">
+          <h2 id="questionTitle" class="text-2xl md:text-4xl font-extrabold text-blue-900"></h2>
+          <p id="questionContext" class="font-bold text-slate-600 text-base md:text-lg mt-2"></p>
+        </div>
+
+        <div id="singleClockArea" class="flex justify-center my-4">
+          <div class="bg-white border-4 border-blue-100 rounded-[2rem] p-3 shadow-xl"><div id="singleClock" class="clock"></div></div>
+        </div>
+
+        <div id="doubleClockArea" class="hidden grid grid-cols-2 gap-3 md:gap-8 my-4">
+          <div class="bg-white border-4 border-emerald-100 rounded-[2rem] p-2 md:p-4 text-center shadow-xl">
+            <div class="font-extrabold text-emerald-700 mb-2">Hora de inicio 🚶</div>
+            <div id="startClock" class="clock small"></div>
+          </div>
+          <div class="bg-white border-4 border-blue-100 rounded-[2rem] p-2 md:p-4 text-center shadow-xl">
+            <div class="font-extrabold text-blue-800 mb-2">Hora de llegada 🏁</div>
+            <div id="endClock" class="clock small"></div>
+          </div>
+        </div>
+
+        <div id="options" class="grid sm:grid-cols-2 gap-3 mt-6"></div>
+
+        <div id="feedback" class="hidden mt-5 rounded-2xl p-4 border-4 text-center">
+          <div id="feedbackIcon" class="text-5xl"></div>
+          <div id="feedbackTitle" class="game-font text-2xl font-extrabold mt-1"></div>
+          <div id="feedbackText" class="font-bold text-lg mt-1"></div>
+          <button id="nextBtn" class="btn btn-green mt-4">Siguiente reto ➜</button>
+        </div>
+      </div>
+    </section>
+
+    <section id="worldComplete" class="screen">
+      <div class="glass rounded-[2rem] max-w-3xl mx-auto p-7 md:p-12 text-center">
+        <div class="text-8xl pop">🏆✨</div>
+        <h2 id="completeTitle" class="text-4xl md:text-5xl font-extrabold text-emerald-700"></h2>
+        <p id="completeText" class="text-lg md:text-2xl font-bold text-slate-600 mt-3"></p>
+        <div id="stickerReward" class="text-8xl my-5"></div>
+        <button id="continueMapBtn" class="btn btn-primary text-xl">Volver al mapa 🗺️</button>
+      </div>
+    </section>
+
+    <section id="album" class="screen">
+      <div class="glass rounded-[2rem] p-5 md:p-8">
+        <div class="flex justify-between items-center gap-3 mb-5">
+          <div><h2 class="text-3xl md:text-4xl font-extrabold text-blue-800">Álbum de pegatinas</h2><p class="font-bold text-slate-600">Cada mundo completado desbloquea una pegatina.</p></div>
+          <button class="btn btn-soft navMap">← Mapa</button>
+        </div>
+        <div id="stickerGrid" class="grid grid-cols-2 md:grid-cols-4 gap-4"></div>
+        <h3 class="text-2xl font-extrabold mt-8 mb-3">Logros</h3>
+        <div id="achievementGrid" class="grid md:grid-cols-2 gap-3"></div>
+      </div>
+    </section>
+
+    <section id="parent" class="screen">
+      <div class="glass rounded-[2rem] p-5 md:p-8">
+        <div class="flex justify-between items-center gap-3 mb-5">
+          <div><h2 class="text-3xl md:text-4xl font-extrabold text-blue-800">Panel familiar</h2><p class="font-bold text-slate-600">Resumen local del progreso.</p></div>
+          <button class="btn btn-soft navMap">← Mapa</button>
+        </div>
+        <div id="parentSummary" class="grid md:grid-cols-3 gap-4 mb-6"></div>
+        <div id="skillStats" class="space-y-4"></div>
+      </div>
+    </section>
+  </main>
+
+<script>
+const PETS=[
+  {id:'pipo',emoji:'🐼',name:'Pipo',desc:'Divertido, curioso y algo despistado.'},
+  {id:'nala',emoji:'🦊',name:'Nala',desc:'Lista, bromista y muy aventurera.'},
+  {id:'otto',emoji:'🐧',name:'Otto',desc:'Valiente, simpático y un poco torpe.'},
+  {id:'misu',emoji:'🐱',name:'Misu',desc:'Curiosa, rápida y muy observadora.'}
+];
+
+const WORLDS=[
+  {id:'pueblo',emoji:'🏡',name:'Pueblo de los Relojes',skill:'Horas en punto',type:'read',minutes:[0],sticker:'🏡',intro:'Tenemos que llegar a la plaza antes de que suenen las campanas.'},
+  {id:'castillo',emoji:'🏰',name:'Castillo de la Media Hora',skill:'Horas y media',type:'read',minutes:[0,30],sticker:'🏰',intro:'La puerta solo se abre cuando acertamos la hora exacta.'},
+  {id:'piratas',emoji:'🏴‍☠️',name:'Isla Pirata',skill:'Cuartos de hora',type:'read',minutes:[0,15,30,45],sticker:'🏴‍☠️',intro:'El capitán ha escondido la llave dentro de un reloj.'},
+  {id:'jurasico',emoji:'🦖',name:'Valle Jurásico',skill:'Minutos de 5 en 5',type:'read',minutes:[0,5,10,15,20,25,30,35,40,45,50,55],sticker:'🦖',intro:'Creo que ese dinosaurio sabe la hora... o quizá tiene hambre.'},
+  {id:'estacion',emoji:'🚂',name:'Estación del Tiempo',skill:'Diferencias de minutos',type:'diff',maxDiff:55,sticker:'🚂',intro:'Tenemos que saber cuánto falta para que salga el tren.'},
+  {id:'futuro',emoji:'🚀',name:'Ciudad del Futuro',skill:'Horas y minutos',type:'diff',maxDiff:180,sticker:'🚀',intro:'Los relojes del futuro también necesitan nuestra ayuda.'}
+];
+
+const CONTEXTS_READ=[
+  'El colegio empieza a esta hora. ¿Qué hora es?',
+  'La película empieza cuando el reloj marque esta hora.',
+  'La fiesta de cumpleaños comienza a esta hora.',
+  'El tren sale cuando el reloj marque esta hora.',
+  'La pizza estará lista a esta hora.'
+];
+
+const CONTEXTS_DIFF=[
+  '¿Cuánto tiempo falta para que empiece la película?',
+  '¿Cuánto dura el viaje en tren?',
+  '¿Cuánto tiempo queda hasta el cumpleaños?',
+  '¿Cuánto dura el entrenamiento?',
+  '¿Cuánto tiempo falta para que esté lista la pizza?'
+];
+
+const state={
+  profile:null,
+  selectedPet:'pipo',
+  currentWorld:0,
+  current:null,
+  attempts:0,
+  answered:false,
+  sessionStars:0,
+  streak:0,
+  explorer:false
+};
+
+const $=id=>document.getElementById(id);
+const save=()=>localStorage.setItem('aventuraTiempoV2',JSON.stringify(state.profile));
+const load=()=>{try{return JSON.parse(localStorage.getItem('aventuraTiempoV2'))}catch(e){return null}};
+const show=id=>{document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));$(id).classList.add('active');window.scrollTo({top:0,behavior:'smooth'})};
+const pad=n=>String(n).padStart(2,'0');
+const fmt=(h,m)=>`${pad(h)}:${pad(m)}`;
+const duration=t=>{const h=Math.floor(t/60),m=t%60;if(!h)return `${m} minuto${m===1?'':'s'}`;if(!m)return `${h} hora${h===1?'':'s'}`;return `${h} hora${h===1?'':'s'} y ${m} minuto${m===1?'':'s'}`};
+const pet=()=>PETS.find(p=>p.id===state.profile.pet);
+
+function initialProfile(name,age,petId){
+  return{
+    name,age,pet:petId,unlocked:0,completed:[],stickers:[],achievements:[],
+    totalAnswered:0,totalCorrect:0,streakBest:0,explorerUnlocked:false,
+    skills:Object.fromEntries(WORLDS.map(w=>[w.id,{attempts:0,correct:0,mastery:0}]))
+  };
+}
+
+function renderPets(){
+  $('petGrid').innerHTML='';
+  PETS.forEach(p=>{
+    const card=document.createElement('button');
+    card.type='button';
+    card.className='pet-card text-center'+(state.selectedPet===p.id?' selected':'');
+    card.innerHTML=`<div class="text-6xl">${p.emoji}</div><div class="game-font text-xl font-extrabold">${p.name}</div><div class="text-sm font-bold text-slate-600">${p.desc}</div>`;
+    card.onclick=()=>{state.selectedPet=p.id;renderPets()};
+    $('petGrid').appendChild(card);
+  });
+}
+
+function initWelcome(){
+  renderPets();
+  const profile=load();
+  if(profile){
+    $('resumeBox').classList.remove('hidden');
+    const p=PETS.find(x=>x.id===profile.pet);
+    $('resumeBox').innerHTML=`<div class="flex flex-col md:flex-row gap-3 justify-between md:items-center"><div><div class="text-xl font-extrabold">${p.emoji} ¡Hola otra vez, ${profile.name}!</div><div class="font-bold text-slate-600">Tu aventura sigue guardada.</div></div><button id="resumeBtn" class="btn btn-green">Continuar aventura</button></div>`;
+    $('resumeBtn').onclick=()=>{state.profile=profile;showMap()};
+  }
+}
+
+function showMap(){
+  show('map');
+  $('mapPet').textContent=pet().emoji;
+  $('mapGreeting').textContent=`¡Hola, ${state.profile.name}!`;
+  renderWorlds();
+  renderExplorer();
+}
+
+function renderWorlds(){
+  $('worldGrid').innerHTML='';
+  WORLDS.forEach((w,i)=>{
+    const locked=i>state.profile.unlocked;
+    const completed=state.profile.completed.includes(w.id);
+    const mastery=state.profile.skills[w.id]?.mastery||0;
+    const card=document.createElement('div');
+    card.className=`world-card ${locked?'locked':''} ${i===state.profile.unlocked&&!completed?'current':''}`;
+    card.innerHTML=`
+      <div class="flex gap-4 items-center">
+        <div class="text-6xl">${locked?'🔒':w.emoji}</div>
+        <div class="flex-1">
+          <div class="game-font text-2xl font-extrabold">${w.name}</div>
+          <div class="font-bold text-slate-600">${w.skill}</div>
+          <div class="mt-2 flex gap-2 flex-wrap">
+            <span class="badge bg-yellow-100">${completed?'⭐⭐⭐⭐⭐':'⭐ '+Math.round(mastery)+'%'}</span>
+            ${completed?'<span class="badge bg-emerald-100">Completado</span>':''}
+          </div>
+        </div>
+      </div>
+      <button class="btn ${locked?'btn-soft':'btn-primary'} w-full mt-4" ${locked?'disabled':''}>${completed?'Practicar de nuevo':'Entrar al mundo'}</button>`;
+    if(!locked)card.querySelector('button').onclick=()=>startWorld(i,false);
+    $('worldGrid').appendChild(card);
+  });
+}
+
+function renderExplorer(){
+  if(!state.profile.explorerUnlocked){$('explorerCard').classList.add('hidden');return}
+  $('explorerCard').classList.remove('hidden');
+  $('explorerCard').innerHTML=`<div class="flex flex-col md:flex-row gap-4 justify-between md:items-center"><div><div class="text-4xl">🧭⏳</div><h3 class="game-font text-2xl font-extrabold">Modo Explorador del Tiempo</h3><p class="font-bold text-slate-600">Retos infinitos adaptados a lo que más necesitas practicar.</p></div><button id="startExplorer" class="btn btn-gold">Empezar exploración</button></div>`;
+  $('startExplorer').onclick=()=>startWorld(chooseWeakestWorld(),true);
+}
+
+function chooseWeakestWorld(){
+  let best=0,lowest=Infinity;
+  WORLDS.forEach((w,i)=>{
+    const m=state.profile.skills[w.id].mastery;
+    if(m<lowest){lowest=m;best=i}
+  });
+  return best;
+}
+
+function startWorld(index,explorer){
+  state.currentWorld=index;
+  state.explorer=explorer;
+  state.sessionStars=0;
+  state.streak=0;
+  show('game');
+  loadChallenge();
+}
+
+function adaptiveMinuteSet(world){
+  const skill=state.profile.skills[world.id];
+  const age=state.profile.age;
+  if(world.type==='read'){
+    if(skill.mastery<35)return world.minutes.slice(0,Math.min(world.minutes.length,4));
+    if(age<=8&&world.id==='jurasico')return world.minutes;
+    return world.minutes;
+  }
+  return null;
+}
+
+function generateRead(world){
+  const minutes=adaptiveMinuteSet(world);
+  const h=1+Math.floor(Math.random()*12);
+  const m=minutes[Math.floor(Math.random()*minutes.length)];
+  return{type:'read',h,m,answer:fmt(h,m),context:CONTEXTS_READ[Math.floor(Math.random()*CONTEXTS_READ.length)]};
+}
+
+function generateDiff(world){
+  const skill=state.profile.skills[world.id];
+  let max=world.maxDiff;
+  if(skill.mastery<35)max=Math.min(max,30);
+  else if(skill.mastery<70)max=Math.min(max,90);
+  let diff;
+  if(max<=55)diff=[5,10,15,20,25,30,35,40,45,50,55].filter(x=>x<=max)[Math.floor(Math.random()*Math.ceil(max/5))];
+  else{
+    const choices=[];
+    for(let x=15;x<=max;x+=5)choices.push(x);
+    diff=choices[Math.floor(Math.random()*choices.length)];
+  }
+  let start=7*60+Math.floor(Math.random()*(12*60-7*60-diff));
+  start=Math.floor(start/5)*5;
+  const end=start+diff;
+  return{type:'diff',start,end,answer:diff,context:CONTEXTS_DIFF[Math.floor(Math.random()*CONTEXTS_DIFF.length)]};
+}
+
+function buildClock(el,h,m){
+  el.innerHTML='';
+  for(let i=0;i<60;i++){
+    const t=document.createElement('div');t.className='tick'+(i%5===0?' big':'');t.style.transform=`translateX(-50%) rotate(${i*6}deg)`;el.appendChild(t)
+  }
+  const r=39;
+  for(let n=1;n<=12;n++){
+    const a=(n*30-90)*Math.PI/180;
+    const num=document.createElement('div');num.className='number';num.style.left=`${50+r*Math.cos(a)}%`;num.style.top=`${50+r*Math.sin(a)}%`;num.textContent=n;el.appendChild(num)
+  }
+  const hh=document.createElement('div');hh.className='hand hour-hand';hh.style.transform=`rotate(${(h%12)*30+m*.5}deg)`;el.appendChild(hh);
+  const mh=document.createElement('div');mh.className='hand minute-hand';mh.style.transform=`rotate(${m*6}deg)`;el.appendChild(mh);
+  const c=document.createElement('div');c.className='center-dot';el.appendChild(c)
+}
+
+function mascotLine(world){
+  const lines=[
+    `Creo que sé la respuesta... aunque una vez confundí las cinco con las seis.`,
+    `¡Vamos, ${state.profile.name}! Prometo no tocar ningún botón raro.`,
+    `Si acertamos, quizá encontremos una pegatina secreta.`,
+    world.intro
+  ];
+  return lines[Math.floor(Math.random()*lines.length)];
+}
+
+function loadChallenge(){
+  const world=WORLDS[state.currentWorld];
+  state.current=world.type==='read'?generateRead(world):generateDiff(world);
+  state.attempts=0;state.answered=false;
+  $('feedback').classList.add('hidden');
+  $('worldTitle').textContent=`${world.emoji} ${world.name}`;
+  $('worldSkill').textContent=state.explorer?'Modo Explorador adaptativo':world.skill;
+  $('gamePet').textContent=pet().emoji;
+  $('mascotFace').textContent=pet().emoji;
+  resetMascotBubble();
+  $('mascotText').textContent=mascotLine(world);
+  $('starsNow').textContent=state.sessionStars;
+  $('streakNow').textContent=state.streak;
+  $('starProgress').style.width=`${state.sessionStars*20}%`;
+  renderChallenge();
+}
+
+function renderChallenge(){
+  const q=state.current;
+  $('questionContext').textContent=q.context;
+  if(q.type==='read'){
+    $('singleClockArea').classList.remove('hidden');$('doubleClockArea').classList.add('hidden');
+    $('questionTitle').textContent='¿Qué hora marca el reloj?';
+    buildClock($('singleClock'),q.h,q.m);
+    const options=new Set([q.answer]);
+    while(options.size<4){
+      const dh=[-1,0,1][Math.floor(Math.random()*3)];
+      const dm=[-15,-5,5,15,30][Math.floor(Math.random()*5)];
+      let h=((q.h-1+dh+12)%12)+1,m=(q.m+dm+60)%60;
+      m=Math.round(m/5)*5%60;
+      options.add(fmt(h,m));
+    }
+    renderOptions([...options],false);
+  }else{
+    $('singleClockArea').classList.add('hidden');$('doubleClockArea').classList.remove('hidden');
+    const sh=Math.floor(q.start/60),sm=q.start%60,eh=Math.floor(q.end/60),em=q.end%60;
+    $('questionTitle').textContent='¿Cuánto tiempo pasa desde el inicio hasta la llegada?';
+    $('questionContext').textContent=`Desde las ${fmt(sh,sm)} hasta las ${fmt(eh,em)}. ${q.context}`;
+    buildClock($('startClock'),((sh-1)%12)+1,sm);buildClock($('endClock'),((eh-1)%12)+1,em);
+    const options=new Set([q.answer]);
+    const deltas=[5,10,15,30,60];
+    while(options.size<4){
+      const d=deltas[Math.floor(Math.random()*deltas.length)];
+      options.add(Math.max(5,q.answer+(Math.random()>.5?d:-d)));
+    }
+    renderOptions([...options],true);
+  }
+}
+
+function renderOptions(values,isDuration){
+  $('options').innerHTML='';
+  values.sort(()=>Math.random()-.5).forEach(v=>{
+    const b=document.createElement('button');b.className='option';b.dataset.value=v;b.textContent=isDuration?duration(v):v;
+    b.onclick=()=>checkAnswer(v,b);$('options').appendChild(b)
+  })
+}
+
+function hintText(){
+  const q=state.current;
+  if(q.type==='read'){
+    if(state.attempts===1)return `Mira primero la aguja corta: ella indica la hora.`;
+    if(state.attempts===2)return `La aguja corta señala la hora ${q.h}. Ahora observa la aguja larga.`;
+    return `Cada número grande suma 5 minutos. La respuesta es ${q.answer}.`;
+  }
+  if(state.attempts===1)return `Cuenta primero los minutos hasta completar la siguiente hora.`;
+  if(state.attempts===2)return `Después suma las horas completas que hay entre los dos relojes.`;
+  return `La diferencia correcta es ${duration(q.answer)}.`;
+}
+
+
+function showMascotHint(){
+  const bubble=$('mascotBubble');
+  bubble.classList.remove('hint-1','hint-2','hint-3','hint-pulse');
+
+  const level=Math.min(state.attempts,3);
+  const labels={
+    1:'💡 ¡Tengo una pista!',
+    2:'🔎 Vamos a mirarlo más de cerca',
+    3:'🧠 Te lo explico paso a paso'
+  };
+
+  $('mascotText').innerHTML=`<div class="game-font text-lg md:text-xl font-extrabold mb-1">${labels[level]}</div><div>${hintText()}</div>`;
+
+  void bubble.offsetWidth;
+  bubble.classList.add(`hint-${level}`,'hint-pulse');
+
+  bubble.scrollIntoView({behavior:'smooth',block:'center'});
+}
+
+function resetMascotBubble(){
+  const bubble=$('mascotBubble');
+  bubble.classList.remove('hint-1','hint-2','hint-3','hint-pulse');
+}
+
+function checkAnswer(value,button){
+  if(state.answered)return;
+  state.attempts++;
+  const correct=String(value)===String(state.current.answer);
+  if(correct){
+    state.answered=true;
+    button.classList.add('correct');
+    document.querySelectorAll('.option').forEach(b=>b.disabled=true);
+    const firstTry=state.attempts===1;
+    state.sessionStars+=firstTry?1:0;
+    state.streak=firstTry?state.streak+1:0;
+    updateStats(true);
+    showFeedback(true,firstTry?`¡Brillante, ${state.profile.name}!`:`¡Lo conseguimos juntos!`,
+      state.current.type==='read'?`Son las ${state.current.answer}.`:`Pasan ${duration(state.current.answer)}.`);
+  }else{
+    button.classList.add('wrong');
+    state.streak=0;
+    updateStats(false);
+    showMascotHint();
+    button.disabled=true;
+    if(state.attempts>=3){
+      state.answered=true;
+      document.querySelectorAll('.option').forEach(b=>{
+        b.disabled=true;
+        if(String(b.dataset.value)===String(state.current.answer))b.classList.add('correct')
+      });
+      showFeedback(false,`Ya lo tenemos, ${state.profile.name}`,hintText());
+    }else{
+      $('feedback').classList.add('hidden');
+      setTimeout(()=>button.classList.remove('wrong'),700);
+    }
+  }
+  $('streakNow').textContent=state.streak;
+}
+
+function updateStats(correct){
+  const id=WORLDS[state.currentWorld].id;
+  const s=state.profile.skills[id];
+  s.attempts++;
+  if(correct)s.correct++;
+  s.mastery=Math.round((s.correct/s.attempts)*100);
+  state.profile.totalAnswered++;
+  if(correct)state.profile.totalCorrect++;
+  state.profile.streakBest=Math.max(state.profile.streakBest,state.streak);
+  unlockAchievements();
+  save();
+}
+
+function showFeedback(ok,title,text){
+  const f=$('feedback');f.className=`mt-5 rounded-2xl p-4 border-4 text-center ${ok?'bg-emerald-50 border-emerald-300':'bg-yellow-50 border-yellow-300'}`;
+  $('feedbackIcon').textContent=ok?'🌟':'💡';$('feedbackTitle').textContent=title;$('feedbackText').textContent=text;f.classList.remove('hidden');
+}
+
+function unlockAchievements(){
+  const a=state.profile.achievements;
+  if(state.profile.totalCorrect>=10&&!a.includes('primeros10'))a.push('primeros10');
+  if(state.profile.streakBest>=5&&!a.includes('racha5'))a.push('racha5');
+  if(state.profile.completed.length>=3&&!a.includes('viajero'))a.push('viajero');
+  if(state.profile.completed.length===WORLDS.length&&!a.includes('maestro'))a.push('maestro');
+}
+
+function completeWorld(){
+  const world=WORLDS[state.currentWorld];
+  if(!state.profile.completed.includes(world.id))state.profile.completed.push(world.id);
+  if(!state.profile.stickers.includes(world.sticker))state.profile.stickers.push(world.sticker);
+  state.profile.unlocked=Math.min(WORLDS.length-1,Math.max(state.profile.unlocked,state.currentWorld+1));
+  if(state.profile.completed.length===WORLDS.length)state.profile.explorerUnlocked=true;
+  unlockAchievements();save();
+  $('completeTitle').textContent=`¡Mundo completado, ${state.profile.name}!`;
+  $('completeText').textContent=`Has conseguido 5 estrellas y dominado: ${world.skill}.`;
+  $('stickerReward').textContent=world.sticker;
+  show('worldComplete');
+}
+
+$('nextBtn').onclick=()=>{
+  if(state.sessionStars>=5&&!state.explorer){completeWorld();return}
+  if(state.explorer&&state.sessionStars>=5){
+    $('completeTitle').textContent=`¡Gran exploración, ${state.profile.name}!`;
+    $('completeText').textContent='Has completado una ronda adaptativa. Puedes seguir explorando siempre que quieras.';
+    $('stickerReward').textContent='🧭';
+    show('worldComplete');return
+  }
+  loadChallenge()
+};
+
+$('backMapBtn').onclick=showMap;
+$('continueMapBtn').onclick=showMap;
+document.querySelectorAll('.navMap').forEach(b=>b.onclick=showMap);
+
+$('albumBtn').onclick=()=>{renderAlbum();show('album')};
+$('parentBtn').onclick=()=>{renderParent();show('parent')};
+
+function renderAlbum(){
+  $('stickerGrid').innerHTML='';
+  WORLDS.forEach(w=>{
+    const got=state.profile.stickers.includes(w.sticker);
+    const d=document.createElement('div');d.className='world-card text-center';
+    d.innerHTML=`<div class="text-7xl ${got?'':'grayscale opacity-25'}">${w.sticker}</div><div class="font-extrabold mt-2">${got?w.name:'Pegatina bloqueada'}</div>`;
+    $('stickerGrid').appendChild(d)
+  });
+  const defs=[
+    ['primeros10','🌟 Primeros 10 aciertos'],
+    ['racha5','🔥 Racha de 5'],
+    ['viajero','🗺️ Gran viajero'],
+    ['maestro','🏆 Maestro del Tiempo']
+  ];
+  $('achievementGrid').innerHTML='';
+  defs.forEach(([id,label])=>{
+    const got=state.profile.achievements.includes(id);
+    const d=document.createElement('div');d.className=`world-card ${got?'':'locked'}`;d.textContent=got?label:`🔒 ${label}`;
+    $('achievementGrid').appendChild(d)
+  })
+}
+
+function renderParent(){
+  const accuracy=state.profile.totalAnswered?Math.round(state.profile.totalCorrect/state.profile.totalAnswered*100):0;
+  $('parentSummary').innerHTML=`
+    <div class="world-card text-center"><div class="text-4xl">🎯</div><div class="text-3xl font-extrabold">${accuracy}%</div><div class="font-bold">Precisión global</div></div>
+    <div class="world-card text-center"><div class="text-4xl">⭐</div><div class="text-3xl font-extrabold">${state.profile.totalCorrect}</div><div class="font-bold">Aciertos</div></div>
+    <div class="world-card text-center"><div class="text-4xl">🔥</div><div class="text-3xl font-extrabold">${state.profile.streakBest}</div><div class="font-bold">Mejor racha</div></div>`;
+  $('skillStats').innerHTML='';
+  WORLDS.forEach(w=>{
+    const s=state.profile.skills[w.id];
+    const d=document.createElement('div');d.className='world-card';
+    d.innerHTML=`<div class="flex justify-between gap-3 font-extrabold"><span>${w.emoji} ${w.skill}</span><span>${s.mastery}%</span></div><div class="progress-shell mt-2"><div class="progress-bar" style="width:${s.mastery}%"></div></div><div class="text-sm font-bold text-slate-500 mt-2">${s.correct} aciertos de ${s.attempts} intentos</div>`;
+    $('skillStats').appendChild(d)
+  })
+}
+
+$('resetBtn').onclick=()=>{
+  if(confirm('¿Seguro que quieres borrar todo el progreso guardado?')){
+    localStorage.removeItem('aventuraTiempoV2');
+    location.reload();
+  }
+};
+
+$('profileForm').onsubmit=e=>{
+  e.preventDefault();
+  const name=$('nameInput').value.trim(),age=Number($('ageInput').value);
+  const err=$('profileError');
+  if(name.length<2){err.textContent='Escribe un nombre de al menos 2 letras.';err.classList.remove('hidden');return}
+  if(!Number.isInteger(age)||age<6||age>12){err.textContent='Escribe una edad entre 6 y 12 años.';err.classList.remove('hidden');return}
+  err.classList.add('hidden');
+  state.profile=initialProfile(name,age,state.selectedPet);save();showMap()
+};
+
+initWelcome();
+</script>
+
+<script>
+(function () {
+  let deferredInstallPrompt = null;
+
+  function createPwaControls() {
+    const box = document.createElement('div');
+    box.id = 'pwaControls';
+    box.style.cssText = [
+      'position:fixed','right:12px','bottom:12px','z-index:9999',
+      'display:flex','gap:8px','align-items:center','flex-wrap:wrap',
+      'font-family:Nunito,Arial,sans-serif'
+    ].join(';');
+
+    const offline = document.createElement('div');
+    offline.id = 'offlineBadge';
+    offline.textContent = navigator.onLine ? '🌐 En línea' : '📴 Sin conexión';
+    offline.style.cssText = [
+      'background:rgba(255,255,255,.96)','border:2px solid #cfe5f3',
+      'border-radius:999px','padding:8px 12px','font-weight:900',
+      'box-shadow:0 6px 18px rgba(22,55,86,.18)'
+    ].join(';');
+
+    const install = document.createElement('button');
+    install.id = 'installPwaBtn';
+    install.textContent = '⬇️ Instalar';
+    install.hidden = true;
+    install.style.cssText = [
+      'border:0','border-radius:999px','padding:10px 14px',
+      'background:linear-gradient(135deg,#ffd95c,#ffb425)',
+      'color:#573700','font-weight:900','box-shadow:0 5px 0 rgba(24,61,93,.18)',
+      'cursor:pointer'
+    ].join(';');
+
+    install.addEventListener('click', async () => {
+      if (!deferredInstallPrompt) return;
+      deferredInstallPrompt.prompt();
+      await deferredInstallPrompt.userChoice;
+      deferredInstallPrompt = null;
+      install.hidden = true;
+    });
+
+    box.append(offline, install);
+    document.body.appendChild(box);
+
+    const updateOnlineStatus = () => {
+      offline.textContent = navigator.onLine ? '🌐 En línea' : '📴 Sin conexión';
+    };
+    window.addEventListener('online', updateOnlineStatus);
+    window.addEventListener('offline', updateOnlineStatus);
+  }
+
+  window.addEventListener('beforeinstallprompt', (event) => {
+    event.preventDefault();
+    deferredInstallPrompt = event;
+    const btn = document.getElementById('installPwaBtn');
+    if (btn) btn.hidden = false;
+  });
+
+  window.addEventListener('appinstalled', () => {
+    deferredInstallPrompt = null;
+    const btn = document.getElementById('installPwaBtn');
+    if (btn) btn.hidden = true;
+  });
+
+  window.addEventListener('DOMContentLoaded', createPwaControls);
+
+  if ('serviceWorker' in navigator) {
+    window.addEventListener('load', () => {
+      navigator.serviceWorker.register('./sw.js', { scope: './' })
+        .catch(err => console.error('No se pudo registrar el Service Worker:', err));
+    });
+  }
+})();
+</script>
+
+</body>
+</html>
